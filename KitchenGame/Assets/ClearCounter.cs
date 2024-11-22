@@ -15,12 +15,12 @@ public class ClearCounter : MonoBehaviour
 
     [SerializeField] private Material[] counterSkins;
     // Start is called before the first frame update
-    public void Interact()
+    public void Interact(Player player)
     {
         DebugUtility.LogWithColor("Interact Pressed for Counter: "+ name, Color.green);
         selectedVisual.SetActive(true);
 
-        if (!HasObjectOnTop)
+        if (!HasObjectOnTop && !player.HoldingObject)
         {
             DebugUtility.LogWithColor("Added Object on top: "+ kitchenObjectSO.name, Color.green);
             Transform kitchenObjectTransform = Instantiate(kitchenObjectSO.prefab, CounterTopPoint);
@@ -30,8 +30,17 @@ public class ClearCounter : MonoBehaviour
             KitchenObject.Initialize(this);
         }else
         {
-            DebugUtility.LogWithColor("Object on top: "+ kitchenObjectSO.name, Color.green);
-
+            if (!KitchenObject)
+            {
+                if (player.HoldingObject)
+                {
+                    player.HoldingObject.ChangeOwner(this);
+                }
+            }
+            else
+            {
+                KitchenObject.ChangeOwner(player);
+            }
         }
 
     }

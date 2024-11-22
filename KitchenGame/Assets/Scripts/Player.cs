@@ -22,6 +22,11 @@ public class Player : MonoBehaviour, IGameInput
     private bool _isHit;
     private RaycastHit _hitObject;
     private ClearCounter _selectedCounter;
+    
+    public KitchenObject HoldingObject { get; private set; }
+    [SerializeField] private Transform holdPoint;
+    public Transform HoldPoint => holdPoint;
+
     [SerializeField] private LayerMask countersLayerMask;
     
     void Start()
@@ -127,7 +132,7 @@ public class Player : MonoBehaviour, IGameInput
         
         if (_isHit && _hitObject.transform.TryGetComponent(out _selectedCounter))
         {
-            _selectedCounter.Interact();
+            _selectedCounter.Interact(this);
         }
 
         return true;    
@@ -147,6 +152,19 @@ public class Player : MonoBehaviour, IGameInput
     public bool IsWalking()
     {
         return _isWalking;
+    }
+    public void HoldObject(KitchenObject toHold)
+    {
+        if (HoldingObject != null)
+        {
+            Debug.LogWarning("Already holding: " + HoldingObject.name);
+        }
+        HoldingObject = toHold;
+    }
+
+    public void DropObject()
+    {
+        HoldingObject = null;
     }
 
 
