@@ -1,17 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using DefaultNamespace;
 using UnityEngine;
 
-public class ClearCounter : MonoBehaviour
+public class ClearCounter : MonoBehaviour, IHoldable<KitchenObject>
 {
     [SerializeField] private Transform counterTopPoint;
-    public Transform CounterTopPoint => counterTopPoint;
-
     [SerializeField] private GameObject selectedVisual;
     [SerializeField] private KitchenObjectSO kitchenObjectSO;
-    public bool HasObjectOnTop => KitchenObject != null;
+    public bool HasObjectOnTop => _holdingObject != null;
 
-    public KitchenObject KitchenObject {get; private set;}
+    private KitchenObject _holdingObject;
 
     [SerializeField] private Material[] counterSkins;
     // Start is called before the first frame update
@@ -20,26 +19,25 @@ public class ClearCounter : MonoBehaviour
         DebugUtility.LogWithColor("Interact Pressed for Counter: "+ name, Color.green);
         selectedVisual.SetActive(true);
 
-        if (!HasObjectOnTop && !player.HoldingObject)
+        if (!HasObjectOnTop && !player.HoldingObject())
         {
             DebugUtility.LogWithColor("Added Object on top: "+ kitchenObjectSO.name, Color.green);
-            Transform kitchenObjectTransform = Instantiate(kitchenObjectSO.prefab, CounterTopPoint);
+            Transform kitchenObjectTransform = Instantiate(kitchenObjectSO.prefab, HoldPoint());
             kitchenObjectTransform.localPosition = Vector3.zero;
 
-            KitchenObject = kitchenObjectTransform.GetComponent<KitchenObject>();
-            KitchenObject.Initialize(this);
-        }else
+            kitchenObjectTransform.GetComponent<KitchenObject>().Initialize(this);
+        }
+        else
         {
-            if (!KitchenObject)
+            if (HoldingObject())
             {
-                if (player.HoldingObject)
-                {
-                    player.HoldingObject.ChangeOwner(this);
-                }
+                DebugUtility.LogWithColor("Holding Object "+ HoldingObject().name);
+                HoldingObject().ChangeOwner(player);
             }
-            else
+            else if (player.HoldingObject())
             {
-                KitchenObject.ChangeOwner(player);
+                DebugUtility.LogWithColor("Player Holding Object "+ player.HoldingObject().name);
+                player.HoldingObject().ChangeOwner(this);
             }
         }
 
@@ -57,12 +55,40 @@ public class ClearCounter : MonoBehaviour
 
     public void SetKitchenObject(KitchenObject kitchenObject)
     {
-        KitchenObject = kitchenObject;
+        _holdingObject = kitchenObject;
     }
 
     public void ClearKitchenObject()
     {
-        KitchenObject = null;
+        _holdingObject = null;
+    }
+    
+    
+    public KitchenObject HoldingObject()
+    {
+        return _holdingObject;
     }
 
+    public void HoldObject(KitchenObject toHold)
+    {
+        if (_holdingObject != null)
+        {
+            Debug.LogWarning("Already holding: " + _holdingObject.name);
+        }
+        _holdingObject = toHold;
+    }
+
+    public void DropObject()
+    {
+        _holdingObject = null;
+    }
+
+    public Transform HoldPoint()
+    {
+        return counterTopPoint;
+    }
+    public string Name()
+    {
+        return name;
+    }
 }

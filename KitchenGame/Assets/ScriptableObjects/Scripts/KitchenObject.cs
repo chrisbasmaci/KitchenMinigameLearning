@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DefaultNamespace;
 using UnityEngine;
 
 public class KitchenObject : MonoBehaviour
@@ -8,8 +9,7 @@ public class KitchenObject : MonoBehaviour
     // Start is called before the first frame update
     [SerializeField] private KitchenObjectSO kitchenObjectSO;
 
-    public ClearCounter owningClearCounter { get; private set; }
-    public Player owningPlayer { get; private set; }
+    public IHoldable<KitchenObject> owner { get; private set; }
 
 
 
@@ -28,93 +28,55 @@ public class KitchenObject : MonoBehaviour
 
     public void Initialize(ClearCounter clearCounter)
     {
-        SetClearCounter(clearCounter);
+        SetOwner(clearCounter);
     }
 
     public KitchenObjectSO GetKitchenObjectSO()
     {
         return kitchenObjectSO;
     }
+    
 
-    public void SetClearCounter(ClearCounter newCounter)
+    public void SetOwner(IHoldable<KitchenObject> newOwner)
     {
-        if (owningClearCounter != null) 
+        if (owner != null)
         {
-            Debug.LogError("This object Already has an owner");
+            Debug.LogError("Object Already has an owner");
+        }
+        owner = newOwner;
+        owner.HoldObject(this);
+        DebugUtility.LogWithColor("New Owner is: " + owner.Name(), Color.red);
+    }
+    public void ChangeOwner(IHoldable<KitchenObject> newOwner)
+    {
+        if (newOwner.HasObjectOnTop)
+        {
+            Debug.LogError("New owner:"+newOwner.Name()+" already has an object on top");
             return;
         }
-        owningClearCounter = newCounter;
-
-        
-        owningClearCounter.SetKitchenObject(this);
-        
-        transform.parent = owningClearCounter.CounterTopPoint.transform;
-        transform.localPosition = Vector3.zero;
-    }
-
-    public void ChangeOwner<T>(T newOwner)
-    {
-        if (owningClearCounter)
+        //if we have an old owner we have to be on top of it, just for checks
+        if (owner != null && owner.HoldingObject() != this)
         {
-            owningClearCounter.ClearKitchenObject();
-            owningClearCounter = null;
-        }else if (owningPlayer)
-        {
-            owningPlayer.DropObject();
-            owningPlayer = null;
-        }
-
-
-        if (newOwner is ClearCounter clearCounter)
-        {
-            ChangeOwnerClearCounter(clearCounter);
-        }else if (newOwner is Player player)
-        {
-            ChangeOwnerPlayer(player);
-        }
-        else
-        {
-            Debug.LogError("Cant Move to this object type");
-        }
-    }
-
-    private void ChangeOwnerClearCounter(ClearCounter counterToMove)
-    {
-
-        if (counterToMove.HasObjectOnTop)
-        {
-            Debug.LogError("This Counter to Move Already has an object on top : " + counterToMove.name);
+            DebugUtility.LogWithColor("Owner: " + owner.Name());
+            Debug.LogError("Owner already has an object on top");
             return;
         }
-        
-        SetClearCounter(counterToMove);
 
-    }
 
-    private void ChangeOwnerPlayer(Player playerToHold)
-    {
-        if (owningPlayer)
+        DebugUtility.LogWithColor("About to drop");
+        if (owner != null)
         {
-            DebugUtility.LogWithColor("Changing from player: " + owningPlayer.name + "to" + playerToHold.name);
+            DebugUtility.LogWithColor(owner.Name() + "Dropped " + this.name);
+            owner.DropObject();
+            owner = null;
         }
-        if (playerToHold.HoldingObject)
-        {
-            Debug.LogError("This Player already holds the object: " + playerToHold.HoldingObject.name);
-        }
-        SetPlayer(playerToHold);
-    }
+        newOwner.HoldObject(this);
 
-    public void SetPlayer(Player player)
-    {
-
-        
-        owningPlayer = player;
-        owningPlayer.HoldObject(this);
-        
-        transform.parent = player.HoldPoint.transform;
+        transform.parent = newOwner.HoldPoint().transform;
         transform.localPosition = Vector3.zero;
+        owner = newOwner;
+        DebugUtility.LogWithColor("New Owner is: " + owner.Name(), Color.red);
+
     }
-
-
-
+    
 }

@@ -6,7 +6,7 @@ using UnityEngine;
 using static DebugUtility;
 
 
-public class Player : MonoBehaviour, IGameInput
+public class Player : MonoBehaviour, IGameInput, IHoldable<KitchenObject>
 {
     IGameInput GameInput => this;
     private Vector2 _inputVec;
@@ -22,10 +22,11 @@ public class Player : MonoBehaviour, IGameInput
     private bool _isHit;
     private RaycastHit _hitObject;
     private ClearCounter _selectedCounter;
-    
-    public KitchenObject HoldingObject { get; private set; }
+
+    private KitchenObject _holdingObject;
     [SerializeField] private Transform holdPoint;
-    public Transform HoldPoint => holdPoint;
+
+
 
     [SerializeField] private LayerMask countersLayerMask;
     
@@ -121,7 +122,10 @@ public class Player : MonoBehaviour, IGameInput
         
     }
 
-    //override
+    public bool IsWalking()
+    {
+        return _isWalking;
+    }
     bool IGameInput.Interact()
     {
         //Can only selected one thing at a time
@@ -149,23 +153,33 @@ public class Player : MonoBehaviour, IGameInput
         return false;
     }
 
-    public bool IsWalking()
+
+    public KitchenObject HoldingObject()
     {
-        return _isWalking;
+        return _holdingObject;
     }
+
     public void HoldObject(KitchenObject toHold)
     {
-        if (HoldingObject != null)
+        if (_holdingObject != null)
         {
-            Debug.LogWarning("Already holding: " + HoldingObject.name);
+            Debug.LogWarning("Already holding: " + _holdingObject.name);
         }
-        HoldingObject = toHold;
+        _holdingObject = toHold;
     }
 
     public void DropObject()
     {
-        HoldingObject = null;
+        _holdingObject = null;
     }
 
+    public Transform HoldPoint()
+    {
+        return holdPoint;
+    }
 
+    public string Name()
+    {
+        return name;
+    }
 }
